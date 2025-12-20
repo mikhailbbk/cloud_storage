@@ -1,19 +1,21 @@
 #!/bin/bash
-
-# Скрипт деплоя фронтенда
-
 set -e
 
-echo "🚀 Деплой фронтенда..."
+echo "🚀 Starting frontend deployment..."
 
 cd /opt/cloud_storage/frontend
 
-# Установка зависимостей и сборка
-if [ -f "package.json" ]; then
-    yarn install --frozen-lockfile
-    yarn build
-else
-    echo "⚠️  Файл package.json не найден"
+# Check if package.json exists
+if [ ! -f "package.json" ]; then
+    echo "⚠️ package.json not found. Skipping frontend build."
+    exit 0
 fi
 
-echo "✅ Деплой фронтенда завершен!"
+# Install dependencies and build
+echo "Installing dependencies..."
+npm ci --silent
+
+echo "Building frontend..."
+npm run build
+
+echo "✅ Frontend deployment completed!"

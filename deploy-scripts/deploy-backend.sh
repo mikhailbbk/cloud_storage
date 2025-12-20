@@ -1,34 +1,45 @@
 #!/bin/bash
-
-# Скрипт деплоя бэкенда
-
 set -e
 
-echo "🚀 Деплой бэкенда..."
+echo "🚀 Starting backend deployment..."
 
 cd /opt/cloud_storage/backend
 
-# Активация виртуального окружения
+# Stop gunicorn if running
+sudo systemctl stop gunicorn 2>/dev/null || true
+
+# Setup virtual environment
 if [ ! -d "venv" ]; then
+    echo "Creating virtual environment..."
     python3 -m venv venv
 fi
+
 source venv/bin/activate
 
-# Установка зависимостей
+# Install/upgrade dependencies
+echo "Installing dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Применение миграций
+# Apply database migrations
+echo "Applying database migrations..."
 python manage.py migrate --noinput
 
-# Сбор статических файлов
+# Collect static files
+echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear
 
-# Создание суперпользователя (если не существует)
-echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@example.com', 'admin123')" | python manage.py shell
+# Create superuser if doesn't exist (optional)
+echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@example.com', 'admin123')" | python manage.py shell || echo "Superuser creation skipped or failed"
 
-# Настройка прав доступа
-sudo chown -R www-data:www-data /opt/cloud_storage
+# Set proper permissions
+echo "Setting permissions..."
+sudo chown -R $USER:www-data /opt/cloud_storage
 sudo chmod -R 755 /opt/cloud_storage
+sudo chown www-data:www-data /opt/cloud_storage/backend/cloud_storage.sock 2>/dev/null || true
 
-echo "✅ Деплой бэкенда завершен!"
+# Start gunicorn
+echo "Starting Gunicorn..."
+sudo systemctl start gunicorn
+
+echo "✅ Backend deployment completed!"
