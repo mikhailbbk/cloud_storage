@@ -1,0 +1,87 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ server-version ]
+  pull_request:
+    branches: [ server-version ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+    
+    - name: Run migrations
+      run: |
+        cd backend
+        python manage.py check --deploy
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/server-version'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        
+        # Отключаем проверку хоста (для CI/CD)
+        echo "Host ${{ secrets.SERVER_IP }}
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null" >> ~/.ssh/config
+    
+    - name: Deploy Backend
+      run: |
+        scp -r backend/* ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:/opt/cloud_storage/backend/
+        ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "bash /opt/cloud_storage/deploy-scripts/deploy-backend.sh"
+    
+    - name: Deploy Frontend
+      run: |
+        cd frontend
+        npm ci
+        npm run build
+        scp -r build/* ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }}:/opt/cloud_storage/frontend/build/
+        ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "bash /opt/cloud_storage/deploy-scripts/deploy-frontend.sh"
+    
+    - name: Restart Services
+      run: |
+        ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "sudo systemctl restart gunicorn"
+        ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_IP }} "sudo systemctl restart nginx"
+    
+    - name: Send Notification
+      if: success()
+      run: |
+        echo "Deployment to ${{ secrets.SERVER_IP }} completed successfully!"

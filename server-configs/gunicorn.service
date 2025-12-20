@@ -1,0 +1,21 @@
+[Unit]
+Description=Cloud Storage Gunicorn Daemon
+After=network.target postgresql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/cloud_storage/backend
+Environment="PATH=/opt/cloud_storage/backend/venv/bin"
+EnvironmentFile=/opt/cloud_storage/backend/.env
+ExecStart=/opt/cloud_storage/backend/venv/bin/gunicorn \
+    --workers 4 \
+    --threads 2 \
+    --timeout 120 \
+    --access-logfile /opt/cloud_storage/logs/gunicorn-access.log \
+    --error-logfile /opt/cloud_storage/logs/gunicorn-error.log \
+    --bind unix:/opt/cloud_storage/backend/cloud_storage.sock \
+    core.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
