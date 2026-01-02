@@ -32,6 +32,24 @@ jobs:
         echo '=== Updating code ==='
         git pull origin server-version
         cd backend
+        echo '=== Fixing requirements.txt encoding if needed ==='
+        if ! grep -q '^asgiref==' requirements.txt; then
+          echo 'Fixing requirements.txt encoding...'
+          cat > requirements_fixed.txt << 'REQ_EOF'
+asgiref==3.8.1
+Django==5.2.1
+django-cors-headers==4.3.1
+djangorestframework==3.16.0
+drf-yasg==1.21.10
+python-dotenv==1.1.0
+pytz==2025.2
+sqlparse==0.5.3
+django-filter==23.5
+psycopg2-binary==2.9.10
+gunicorn==23.0.0
+REQ_EOF
+          mv requirements_fixed.txt requirements.txt
+        fi
         echo '=== Setting up environment ==='
         if [ -d 'venv' ]; then
           source venv/bin/activate
