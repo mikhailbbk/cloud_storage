@@ -9,35 +9,32 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
       
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H 194.67.124.178 >> ~/.ssh/known_hosts 2>/dev/null
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "Host target" >> ~/.ssh/config
+          echo "  HostName 194.67.124.178" >> ~/.ssh/config
+          echo "  User mikhail" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          ssh-keyscan 194.67.124.178 >> ~/.ssh/known_hosts
       
-      - name: Deploy to Server
+      - name: Deploy
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no mikhail@194.67.124.178 '
-            set -e
+          ssh target "
             cd /opt/cloud_storage
-            echo "=== Updating code ==="
             git pull origin server-version
             cd backend
-            echo "=== Activating environment ==="
             source venv/bin/activate
-            echo "=== Installing dependencies ==="
-            pip install -r requirements.txt
-            echo "=== Applying migrations ==="
+            pip install -r requirements.txt 2>&1 | tail -5
             python manage.py migrate --noinput
-            echo "=== Collecting static files ==="
-            python manage.py collectstatic --noinput
+            python manage.py collectstatic --noinput 2>&1 | tail -2
             deactivate
-            echo "=== Restarting services ==="
-            sudo /usr/bin/systemctl restart gunicorn-cloud-storage
-            sudo /usr/bin/systemctl reload nginx
-            echo "✅ Deployment completed successfully!"
-          '
+            echo 'Services will be restarted via script...'
+            /usr/local/bin/restart-cloud-app
+            echo 'Deployment done!'
+          "
