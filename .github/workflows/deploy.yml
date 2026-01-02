@@ -11,30 +11,28 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          echo "Host target" >> ~/.ssh/config
-          echo "  HostName 194.67.124.178" >> ~/.ssh/config
-          echo "  User mikhail" >> ~/.ssh/config
-          echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
-          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-          ssh-keyscan 194.67.124.178 >> ~/.ssh/known_hosts
-      
-      - name: Deploy
-        run: |
-          ssh target "
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 194.67.124.178
+          username: mikhail
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # ОБНОВЛЯЕМ КОД И ЗАВИСИМОСТИ
             cd /opt/cloud_storage
             git pull origin server-version
+            
             cd backend
             source venv/bin/activate
-            pip install -r requirements.txt 2>&1 | tail -5
+            pip install -r requirements.txt
             python manage.py migrate --noinput
-            python manage.py collectstatic --noinput 2>&1 | tail -2
+            python manage.py collectstatic --noinput
             deactivate
-            echo 'Services will be restarted via script...'
-            /usr/local/bin/restart-cloud-app
-            echo 'Deployment done!'
-          "
+            
+            # ПРОБУЕМ ПЕРЕЗАПУСТИТЬ СЛУЖБЫ (если не получится - не страшно)
+            sudo systemctl restart gunicorn-cloud-storage 2>/dev/null || echo "Gunicorn restart skipped"
+            sudo systemctl reload nginx 2>/dev/null || echo "Nginx reload skipped"
+            
+            echo "✅ Code deployed! If services need restart, run manually:"
+            echo "sudo systemctl restart gunicorn-cloud-storage"
+            echo "sudo systemctl reload nginx"
