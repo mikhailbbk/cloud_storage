@@ -21,23 +21,41 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
-          echo "=== Deploying Cloud Storage ==="
+          echo "=== GitHub Actions Deployment ==="
+          echo "Time: $(date)"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
           
           cd /opt/cloud_storage
           
-          # Pull changes
+          # 1. Pull latest code
+          echo "1. Pulling latest code..."
           git fetch origin
           git reset --hard origin/server-version
           
-          # Backend
+          # 2. Backend setup
+          echo "2. Setting up backend..."
           cd backend
           source venv/bin/activate
+          pip install --upgrade pip
           pip install -r requirements.txt
+          
+          # 3. Django operations
+          echo "3. Running Django operations..."
           python manage.py collectstatic --noinput
           python manage.py migrate --noinput
           
-          # Restart
+          # 4. Restart services
+          echo "4. Restarting services..."
           sudo systemctl restart cloud-storage.service
           sudo systemctl reload nginx
           
-          echo "✅ Deployment complete!"
+          # 5. Verification
+          echo "5. Verifying deployment..."
+          sleep 2
+          curl -s -o /dev/null -w "API status: %{http_code}\n" http://127.0.0.1:8001/api/ || echo "API check failed"
+          
+          echo ""
+          echo "✅ Deployment completed successfully!"
+          echo "Frontend: https://194.67.124.178:8443/"
+          echo "API: https://194.67.124.178:8443/api/"
