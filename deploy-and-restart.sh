@@ -15,11 +15,16 @@ python manage.py migrate --noinput
 python manage.py collectstatic --noinput
 deactivate
 
-# 3. Перезапускаем Gunicorn через наш скрипт (БЕЗ SUDO!)
+# 3. Перезапускаем Gunicorn (БЕЗ SUDO!)
 /opt/cloud_storage/backend/run_gunicorn.sh restart
 
-# 4. Для nginx оставляем инструкцию
+# 4. Перезагружаем Nginx (если запущен)
+if sudo systemctl is-active --quiet nginx; then
+    sudo systemctl reload nginx
+    echo "✅ Nginx reloaded"
+else
+    echo "⚠️  Nginx is not running"
+fi
+
 echo ""
-echo "✅ Code deployed and Gunicorn restarted!"
-echo "For Nginx reload, run manually:"
-echo "sudo systemctl reload nginx"
+echo "✅ FULLY AUTOMATED DEPLOYMENT COMPLETED!"
