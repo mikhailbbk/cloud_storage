@@ -8,65 +8,30 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-        chmod 600 ~/.ssh/deploy_key
-        ssh-keyscan -H 194.67.124.178 >> ~/.ssh/known_hosts 2>/dev/null
-
-    - name: Deploy to Server
-      run: |
-        set -e
-        
-        # Подготавливаем команды для выполнения
-        COMMANDS="
-        set -e
-        echo '=== Starting deployment ==='
-        cd /opt/cloud_storage
-        echo '=== Updating code ==='
-        git pull origin server-version
-        cd backend
-        echo '=== Fixing requirements.txt encoding if needed ==='
-        if ! grep -q '^asgiref==' requirements.txt; then
-          echo 'Fixing requirements.txt encoding...'
-          cat > requirements_fixed.txt << 'REQ_EOF'
-asgiref==3.8.1
-Django==5.2.1
-django-cors-headers==4.3.1
-djangorestframework==3.16.0
-drf-yasg==1.21.10
-python-dotenv==1.1.0
-pytz==2025.2
-sqlparse==0.5.3
-django-filter==23.5
-psycopg2-binary==2.9.10
-gunicorn==23.0.0
-REQ_EOF
-          mv requirements_fixed.txt requirements.txt
-        fi
-        echo '=== Setting up environment ==='
-        if [ -d 'venv' ]; then
-          source venv/bin/activate
-        else
-          python3 -m venv venv
-          source venv/bin/activate
-        fi
-        pip install -r requirements.txt
-        python manage.py migrate --noinput
-        python manage.py collectstatic --noinput
-        echo '=== Restarting services ==='
-        sudo systemctl restart gunicorn-cloud-storage
-        sudo systemctl reload nginx
-        deactivate
-        echo '=== Deployment completed successfully! ==='
-        echo '✅ Server updated and running'
-        "
-        
-        # Выполняем команды на сервере
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no mikhail@194.67.124.178 "$COMMANDS"
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H 194.67.124.178 >> ~/.ssh/known_hosts 2>/dev/null
+      
+      - name: Deploy to Server
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no mikhail@194.67.124.178 '
+            set -e
+            cd /opt/cloud_storage
+            git pull origin server-version
+            cd backend
+            source venv/bin/activate
+            pip install -r requirements.txt
+            python manage.py migrate --noinput
+            python manage.py collectstatic --noinput
+            sudo systemctl restart gunicorn-cloud-storage
+            sudo systemctl reload nginx
+            deactivate
+            echo "Deployment completed successfully"
+          '
