@@ -1,4 +1,4 @@
-name: Deploy Cloud Storage Correct
+name: Deploy Cloud Storage
 
 on:
   push:
@@ -8,49 +8,72 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+    environment: production
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Deploy to server
-      env:
-        SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup SSH
       run: |
-        # Save SSH key
         mkdir -p ~/.ssh
-        echo "$SSH_KEY" > ~/.ssh/deploy_key
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
         
         # Add server to known_hosts
-        ssh-keyscan -H 194.67.124.178 >> ~/.ssh/known_hosts
+        ssh-keyscan -H 194.67.124.178 >> ~/.ssh/known_hosts 2>/dev/null
+
+    - name: Deploy to Server
+      run: |
+        set -e  # Exit on error
         
-        # Execute deployment CORRECTLY
-        ssh -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=no \
-            mikhail@194.67.124.heredocument
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 mikhail@194.67.124.178 << 'DEPLOY_SCRIPT'
+          set -e
+          echo "=== Starting deployment ==="
           
-          echo '🚀 Starting deployment...'
+          # Go to project directory
+          cd /opt/cloud_storage
           
-          # 1. FIRST go to backend directory
-          cd /opt/cloud_storage/backend
+          # Update code
+          echo "=== Updating code from Git ==="
+          git fetch origin
+          git checkout server-version
+          git pull origin server-version
           
-          # 2. THEN activate virtual environment
+          # Setup backend
+          echo "=== Setting up backend ==="
+          cd backend
+          
+          # Activate virtual environment
+          if [ -d "venv" ]; then
+            echo "Virtual environment exists"
+          else
+            echo "Creating virtual environment..."
+            python3 -m venv venv
+          fi
+          
           source venv/bin/activate
           
-          # 3. NOW install dependencies
-          echo 'Installing dependencies...'
+          # Install dependencies
+          echo "=== Installing dependencies ==="
+          pip install --upgrade pip
           pip install -r requirements.txt
           
-          # 4. Django operations
-          echo 'Running Django operations...'
-          python manage.py collectstatic --noinput
+          # Apply migrations
+          echo "=== Applying database migrations ==="
           python manage.py migrate --noinput
           
-          # 5. Restart services
-          echo 'Restarting services...'
-          sudo systemctl restart cloud-storage.service
-          sudo systemctl reload nginx
+          # Collect static files
+          echo "=== Collecting static files ==="
+          python manage.py collectstatic --noinput --clear
           
-          echo '✅ Deployment completed!'
-          echo 'Time: \$(date)'
-heredocument
+          # Restart services
+          echo "=== Restarting services ==="
+          sudo systemctl restart gunicorn-cloud-storage || echo "Gunicorn service not found or failed to restart"
+          sudo systemctl reload nginx || echo "Nginx reload failed"
+          
+          deactivate
+          
+          echo "=== Deployment completed successfully! ==="
+          echo "✅ Server is updated and running"
+DEPLOY_SCRIPT
