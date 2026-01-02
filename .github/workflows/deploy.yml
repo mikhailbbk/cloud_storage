@@ -19,15 +19,14 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
-        
-        # Add server to known_hosts
-        ssh-keyscan -H 194.67.124.178 >> ~/.ssh/known_hosts 2>/dev/null
+        ssh-keyscan -H 194.67.124.178 >> ~/.ssh/known_hosts
 
     - name: Deploy to Server
       run: |
-        set -e  # Exit on error
+        set -e
         
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 mikhail@194.67.124.178 << 'DEPLOY_SCRIPT'
+        # Создаем скрипт для деплоя
+        DEPLOY_COMMANDS=$(cat << 'DEPLOY_EOF'
           set -e
           echo "=== Starting deployment ==="
           
@@ -36,8 +35,6 @@ jobs:
           
           # Update code
           echo "=== Updating code from Git ==="
-          git fetch origin
-          git checkout server-version
           git pull origin server-version
           
           # Setup backend
@@ -46,17 +43,14 @@ jobs:
           
           # Activate virtual environment
           if [ -d "venv" ]; then
-            echo "Virtual environment exists"
+            source venv/bin/activate
           else
-            echo "Creating virtual environment..."
             python3 -m venv venv
+            source venv/bin/activate
           fi
-          
-          source venv/bin/activate
           
           # Install dependencies
           echo "=== Installing dependencies ==="
-          pip install --upgrade pip
           pip install -r requirements.txt
           
           # Apply migrations
@@ -65,15 +59,19 @@ jobs:
           
           # Collect static files
           echo "=== Collecting static files ==="
-          python manage.py collectstatic --noinput --clear
+          python manage.py collectstatic --noinput
           
           # Restart services
           echo "=== Restarting services ==="
-          sudo systemctl restart gunicorn-cloud-storage || echo "Gunicorn service not found or failed to restart"
-          sudo systemctl reload nginx || echo "Nginx reload failed"
+          sudo systemctl restart gunicorn-cloud-storage
+          sudo systemctl reload nginx
           
           deactivate
           
           echo "=== Deployment completed successfully! ==="
           echo "✅ Server is updated and running"
-DEPLOY_SCRIPT
+DEPLOY_EOF
+        )
+        
+        # Выполняем команды на сервере
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no mikhail@194.67.124.178 "$DEPLOY_COMMANDS"
