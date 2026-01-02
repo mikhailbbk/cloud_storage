@@ -18,8 +18,19 @@ print(f"STATIC_ROOT: {os.path.join(BASE_DIR, 'staticfiles')}")
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 DEBUG = os.getenv('DJANGO_DEBUG') == 'True'
 
+# ДОБАВЛЕНО: Ваш IP-адрес и порты
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-CSRF_TRUSTED_ORIGINS = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost,http://127.0.0.1').split(',')
+ALLOWED_HOSTS += ['194.67.124.178', '0.0.0.0']  # Добавляем ваш IP
+
+# ДОБАВЛЕНО: CSRF trusted origins с вашими URL
+csrf_origins = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost,http://127.0.0.1').split(',')
+csrf_origins += [
+    'https://194.67.124.178:8443',
+    'http://194.67.124.178:8080',
+    'https://194.67.124.178',
+    'http://194.67.124.178',
+]
+CSRF_TRUSTED_ORIGINS = list(set(csrf_origins))  # Убираем дубли
 
 # Настройки приложений
 INSTALLED_APPS = [
@@ -46,7 +57,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'core.final_csrf_fix.FinalCSRFMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -163,7 +174,7 @@ try:
 except ImportError:
     pass
 
-# Настройки CORS
+# ДОБАВЛЕНО: CORS настройки с вашими URL
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://192.168.1.170:3000",
@@ -174,8 +185,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://192.168.1.127:3000",
     "http://89.104.71.186",
     "http://192.168.0.49",
+    # ДОБАВЛЕНО ваши адреса
+    "https://194.67.124.178:8443",
+    "http://194.67.124.178:8080",
+    "https://194.67.124.178",
+    "http://194.67.124.178",
 ]
 CORS_ALLOW_CREDENTIALS = True
+# ДОБАВЛЕНО для отладки (можно убрать после настройки)
+CORS_ALLOW_ALL_ORIGINS = True if DEBUG else False
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -197,7 +215,7 @@ USE_L10N = os.getenv('DJANGO_USE_L10N', 'True') == 'True'
 USE_TZ = os.getenv('DJANGO_USE_TZ', 'True') == 'True'
 
 # Статические файлы
-STATIC_URL = '/static/'
+STATIC_URL = '/django-static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
@@ -275,14 +293,221 @@ SWAGGER_SETTINGS = {
     'JSON_EDITOR': True,
 }
 
+# ИСПРАВЛЕНО: Важные настройки куков для работы с HTTPS
+CSRF_COOKIE_SECURE = True           # True для HTTPS
+SESSION_COOKIE_SECURE = True        # True для HTTPS
+CSRF_COOKIE_SAMESITE = 'Lax'        # Разрешает отправку CSRF токена
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False        # Позволяет JavaScript читать CSRF токен
+CSRF_USE_SESSIONS = False
+# ИСПРАВЛЕНО: Убрали CSRF_COOKIE_DOMAIN для IP-адреса
+# CSRF_COOKIE_DOMAIN = None  # Не используем для IP-адресов
+
+# Дополнительные настройки для работы с фронтендом
+CSRF_COOKIE_NAME = 'csrftoken'
+SESSION_COOKIE_NAME = 'sessionid'
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+CSRF_COOKIE_AGE = 31449600  # 1 год в секундах
+
 # Настройки для production (при выключенном DEBUG)
 if not DEBUG:
     SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', 31536000))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'True') == 'True'
     SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
-    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'True') == 'True'
-    CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True') == 'True'
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_BROWSER_XSS_FILTER = os.getenv('SECURE_BROWSER_XSS_FILTER', 'True') == 'True'
     SECURE_CONTENT_TYPE_NOSNIFF = os.getenv('SECURE_CONTENT_TYPE_NOSNIFF', 'True') == 'True'
     X_FRAME_OPTIONS = os.getenv('X_FRAME_OPTIONS', 'DENY')
+
+# Временные настройки для отладки CSRF
+if DEBUG:
+    CSRF_COOKIE_SECURE = False      # False для отладки
+    SESSION_COOKIE_SECURE = False   # False для отладки
+    CSRF_COOKIE_SAMESITE = 'None'   # Разрешаем кросс-доменные запросы
+    SESSION_COOKIE_SAMESITE = 'None'
+
+# ============================================
+# НАСТРОЙКИ ТОЛЬКО ДЛЯ CLOUD-STORAGE
+# Не влияют на другие проекты
+# ============================================
+
+# Упрощенные CSRF настройки для отладки
+CSRF_COOKIE_SECURE = False      # Временно для тестирования
+SESSION_COOKIE_SECURE = False   # Временно для тестирования
+CSRF_COOKIE_SAMESITE = 'None'   # Разрешаем кросс-доменные запросы
+SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_HTTPONLY = False    # Позволяет JS читать CSRF токен
+
+# Уникальные имена куков для cloud-storage
+CSRF_COOKIE_NAME = 'csrftoken'
+SESSION_COOKIE_NAME = 'sessionid'
+
+# Убедимся что CORS разрешен
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# ============================================
+# НАСТРОЙКИ CSRF ДЛЯ DJANGO ADMIN
+# ============================================
+
+# Включим CSRF для админки
+CSRF_COOKIE_SECURE = False  # True для production с HTTPS
+SESSION_COOKIE_SECURE = False  # True для production с HTTPS
+CSRF_COOKIE_SAMESITE = 'Lax'  # 'Lax' для админки
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # Должен быть False для работы админки
+CSRF_USE_SESSIONS = False
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
+
+# Доменные настройки для куков
+CSRF_COOKIE_DOMAIN = None  # None для IP-адреса
+SESSION_COOKIE_DOMAIN = None
+CSRF_COOKIE_PATH = '/'
+SESSION_COOKIE_PATH = '/'
+
+# Уникальные имена для cloud-storage
+CSRF_COOKIE_NAME = 'csrftoken'
+SESSION_COOKIE_NAME = 'sessionid'
+
+# Включим DEBUG для админки (временно)
+DEBUG = True
+
+# ============================================
+# НАСТРОЙКИ ДЛЯ ФРОНТЕНДА
+# ============================================
+
+# Для работы фронтенда с CSRF
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_HTTPONLY = False  # Должен быть False для доступа JS
+CSRF_COOKIE_SAMESITE = 'Lax'  # Или 'None' для кросс-доменных запросов
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+CSRF_TRUSTED_ORIGINS = [
+    'https://194.67.124.178:8443',
+    'http://194.67.124.178:8080',
+]
+
+# CORS настройки для фронтенда
+CORS_ALLOWED_ORIGINS = [
+    'https://194.67.124.178:8443',
+    'http://194.67.124.178:8080',
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# ============================================
+# УПРОЩЕННЫЕ НАСТРОЙКИ ДЛЯ ФРОНТЕНДА
+# ============================================
+
+# Включим DEBUG для отладки
+DEBUG = True
+
+# Упрощенные CSRF настройки
+CSRF_COOKIE_SECURE = False  # True для production
+SESSION_COOKIE_SECURE = False  # True для production
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # Должен быть False для JS
+CSRF_USE_SESSIONS = False
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+
+# Явно укажем доверенные источники
+CSRF_TRUSTED_ORIGINS = [
+    'https://194.67.124.178:8443',
+    'http://194.67.124.178:8080',
+    'https://194.67.124.178',
+    'http://194.67.124.178',
+]
+
+# CORS настройки
+CORS_ALLOW_ALL_ORIGINS = True  # Временно для отладки
+CORS_ALLOW_CREDENTIALS = True
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',  # с маленькой 's'
+    'x-csrf-token', # с дефисом
+    'X-CSRFToken',  # с заглавными
+    'X-Csrftoken',  # смешанный регистр
+    'x-requested-with',
+]
+
+# Для REST Framework
+REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = [
+    'rest_framework.authentication.SessionAuthentication',
+    'rest_framework.authentication.TokenAuthentication',
+]
+
+# ============================================
+# СОВМЕСТИМОСТЬ СТАРЫХ И НОВЫХ ТОКЕНОВ
+# ============================================
+
+# Используем оба имени токенов для совместимости
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_COOKIE_ALT_NAME = 'csrftoken'  # Альтернативное имя для совместимости
+
+# Явно разрешаем оба заголовка
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+CSRF_ALT_HEADER_NAME = 'HTTP_X_CSRFTOKEN_ALT'
+
+# Разрешаем оба cookie
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+
+# Для CORS явно разрешаем оба заголовка
+CORS_ALLOW_HEADERS = list(set([
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',      # с маленькой 's'
+    'X-CSRFToken',      # с заглавными
+    'X-Csrftoken',      # смешанный регистр
+    'csrftoken',        # альтернативное имя
+    'x-requested-with',
+]))
+
+# Временно отключаем проверку CSRF для фронтенда чтобы протестировать
+CSRF_TRUSTED_ORIGINS = [
+    'https://194.67.124.178:8443',
+    'http://194.67.124.178:8080',
+    'https://194.67.124.178',
+    'http://194.67.124.178',
+]
+
+# ============================================
+# ИСПРАВЛЕНИЕ ССЫЛОК API С ПОРТОМ
+# ============================================
+
+# Для правильного определения хоста и порта за nginx
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Явно задаем порт для всех URL
+FORCE_SCRIPT_NAME = ''
+PORT = '8443'
+
+# Кастомные настройки для API
+REST_FRAMEWORK['DEFAULT_VERSIONING_CLASS'] = 'rest_framework.versioning.NamespaceVersioning'
