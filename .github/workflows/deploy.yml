@@ -24,14 +24,20 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no mikhail@194.67.124.178 '
             set -e
             cd /opt/cloud_storage
+            echo "=== Updating code ==="
             git pull origin server-version
             cd backend
+            echo "=== Activating environment ==="
             source venv/bin/activate
+            echo "=== Installing dependencies ==="
             pip install -r requirements.txt
+            echo "=== Applying migrations ==="
             python manage.py migrate --noinput
+            echo "=== Collecting static files ==="
             python manage.py collectstatic --noinput
-            sudo systemctl restart gunicorn-cloud-storage
-            sudo systemctl reload nginx
             deactivate
-            echo "Deployment completed successfully"
+            echo "=== Restarting services ==="
+            sudo /usr/bin/systemctl restart gunicorn-cloud-storage
+            sudo /usr/bin/systemctl reload nginx
+            echo "✅ Deployment completed successfully!"
           '
