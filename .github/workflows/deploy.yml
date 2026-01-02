@@ -1,4 +1,4 @@
-name: Deploy Cloud Storage
+name: Deploy Cloud Storage Correct
 
 on:
   push:
@@ -10,14 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
     
     - name: Deploy to server
       env:
         SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        SERVER: ${{ secrets.SERVER_HOST }}
-        USER: ${{ secrets.SERVER_USERNAME }}
       run: |
         # Save SSH key
         mkdir -p ~/.ssh
@@ -25,21 +22,35 @@ jobs:
         chmod 600 ~/.ssh/deploy_key
         
         # Add server to known_hosts
-        ssh-keyscan -H $SERVER >> ~/.ssh/known_hosts
+        ssh-keyscan -H 194.67.124.178 >> ~/.ssh/known_hosts
         
-        # Execute deployment
+        # Execute deployment CORRECTLY
         ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
-            $USER@$SERVER "
+            mikhail@194.67.124.heredocument
+          
           echo '🚀 Starting deployment...'
-          cd /opt/cloud_storage
-          git pull origin server-version
-          cd backend
+          
+          # 1. FIRST go to backend directory
+          cd /opt/cloud_storage/backend
+          
+          # 2. THEN activate virtual environment
           source venv/bin/activate
+          
+          # 3. NOW install dependencies
+          echo 'Installing dependencies...'
           pip install -r requirements.txt
+          
+          # 4. Django operations
+          echo 'Running Django operations...'
           python manage.py collectstatic --noinput
           python manage.py migrate --noinput
+          
+          # 5. Restart services
+          echo 'Restarting services...'
           sudo systemctl restart cloud-storage.service
           sudo systemctl reload nginx
+          
           echo '✅ Deployment completed!'
-        "
+          echo 'Time: \$(date)'
+heredocument
