@@ -8,7 +8,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
     - name: Checkout code
@@ -19,59 +18,36 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
-        ssh-keyscan -H 194.67.124.178 >> ~/.ssh/known_hosts
+        ssh-keyscan -H 194.67.124.178 >> ~/.ssh/known_hosts 2>/dev/null
 
     - name: Deploy to Server
       run: |
         set -e
         
-        # Создаем скрипт для деплоя
-        DEPLOY_COMMANDS=$(cat << 'DEPLOY_EOF'
-          set -e
-          echo "=== Starting deployment ==="
-          
-          # Go to project directory
-          cd /opt/cloud_storage
-          
-          # Update code
-          echo "=== Updating code from Git ==="
-          git pull origin server-version
-          
-          # Setup backend
-          echo "=== Setting up backend ==="
-          cd backend
-          
-          # Activate virtual environment
-          if [ -d "venv" ]; then
-            source venv/bin/activate
-          else
-            python3 -m venv venv
-            source venv/bin/activate
-          fi
-          
-          # Install dependencies
-          echo "=== Installing dependencies ==="
-          pip install -r requirements.txt
-          
-          # Apply migrations
-          echo "=== Applying database migrations ==="
-          python manage.py migrate --noinput
-          
-          # Collect static files
-          echo "=== Collecting static files ==="
-          python manage.py collectstatic --noinput
-          
-          # Restart services
-          echo "=== Restarting services ==="
-          sudo systemctl restart gunicorn-cloud-storage
-          sudo systemctl reload nginx
-          
-          deactivate
-          
-          echo "=== Deployment completed successfully! ==="
-          echo "✅ Server is updated and running"
-DEPLOY_EOF
-        )
+        # Подготавливаем команды для выполнения
+        COMMANDS="
+        set -e
+        echo '=== Starting deployment ==='
+        cd /opt/cloud_storage
+        echo '=== Updating code ==='
+        git pull origin server-version
+        cd backend
+        echo '=== Setting up environment ==='
+        if [ -d 'venv' ]; then
+          source venv/bin/activate
+        else
+          python3 -m venv venv
+          source venv/bin/activate
+        fi
+        pip install -r requirements.txt
+        python manage.py migrate --noinput
+        python manage.py collectstatic --noinput
+        sudo systemctl restart gunicorn-cloud-storage
+        sudo systemctl reload nginx
+        deactivate
+        echo '=== Deployment completed ==='
+        echo '✅ Server updated successfully'
+        "
         
         # Выполняем команды на сервере
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no mikhail@194.67.124.178 "$DEPLOY_COMMANDS"
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no mikhail@194.67.124.178 "$COMMANDS"
