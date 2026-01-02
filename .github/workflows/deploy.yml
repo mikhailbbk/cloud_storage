@@ -13,49 +13,33 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        script: |
-          echo "=== GitHub Actions Deployment ==="
-          echo "Time: $(date)"
-          echo "Commit: ${{ github.sha }}"
-          echo ""
-          
+    - name: Deploy to server
+      env:
+        SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SERVER: ${{ secrets.SERVER_HOST }}
+        USER: ${{ secrets.SERVER_USERNAME }}
+      run: |
+        # Save SSH key
+        mkdir -p ~/.ssh
+        echo "$SSH_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        
+        # Add server to known_hosts
+        ssh-keyscan -H $SERVER >> ~/.ssh/known_hosts
+        
+        # Execute deployment
+        ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            $USER@$SERVER "
+          echo '🚀 Starting deployment...'
           cd /opt/cloud_storage
-          
-          # 1. Pull latest code
-          echo "1. Pulling latest code..."
-          git fetch origin
-          git reset --hard origin/server-version
-          
-          # 2. Backend setup
-          echo "2. Setting up backend..."
+          git pull origin server-version
           cd backend
           source venv/bin/activate
-          pip install --upgrade pip
           pip install -r requirements.txt
-          
-          # 3. Django operations
-          echo "3. Running Django operations..."
           python manage.py collectstatic --noinput
           python manage.py migrate --noinput
-          
-          # 4. Restart services
-          echo "4. Restarting services..."
           sudo systemctl restart cloud-storage.service
           sudo systemctl reload nginx
-          
-          # 5. Verification
-          echo "5. Verifying deployment..."
-          sleep 2
-          curl -s -o /dev/null -w "API status: %{http_code}\n" http://127.0.0.1:8001/api/ || echo "API check failed"
-          
-          echo ""
-          echo "✅ Deployment completed successfully!"
-          echo "Frontend: https://194.67.124.178:8443/"
-          echo "API: https://194.67.124.178:8443/api/"
+          echo '✅ Deployment completed!'
+        "
