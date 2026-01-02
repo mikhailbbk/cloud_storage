@@ -18,22 +18,5 @@ jobs:
           username: mikhail
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Обновляем код
-            cd /opt/cloud_storage
-            git pull origin server-version
-            
-            # 2. Устанавливаем зависимости
-            cd backend
-            source venv/bin/activate
-            pip install -r requirements.txt
-            python manage.py migrate --noinput
-            python manage.py collectstatic --noinput
-            deactivate
-            
-            # 3. БЕЗОПАСНО перезапускаем ТОЛЬКО наши службы
-            # Уже есть полные права, но используем ответственно
-            sudo systemctl restart gunicorn-cloud-storage
-            sudo systemctl reload nginx  # ТОЛЬКО reload, НЕ restart!
-            
-            echo "✅ Cloud Storage deployment completed!"
-            echo "⚠️  Using existing sudo rights responsibly"
+            # Просто запускаем наш скрипт
+            /opt/cloud_storage/deploy-and-restart.sh
