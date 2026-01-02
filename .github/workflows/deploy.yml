@@ -42,11 +42,12 @@ jobs:
         pip install -r requirements.txt
         python manage.py migrate --noinput
         python manage.py collectstatic --noinput
+        echo '=== Restarting services ==='
         sudo systemctl restart gunicorn-cloud-storage
         sudo systemctl reload nginx
         deactivate
-        echo '=== Deployment completed ==='
-        echo '✅ Server updated successfully'
+        echo '=== Deployment completed successfully! ==='
+        echo '✅ Server updated and running'
         "
         
         # Выполняем команды на сервере
