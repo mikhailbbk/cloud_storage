@@ -4,7 +4,6 @@
 [![React](https://img.shields.io/badge/React-19.1.0-blue.svg)](https://reactjs.org/)
 [![Python](https://img.shields.io/badge/Python-3.12+-yellow.svg)](https://www.python.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12+-blue.svg)](https://www.postgresql.org/)
-[![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
 
 Полнофункциональное облачное хранилище файлов с веб-интерфейсом, построенное на стеке Django REST Framework + React. Поддерживает загрузку, хранение, категоризацию и безопасный доступ к файлам.
 
@@ -18,7 +17,6 @@
 - [Разработка](#разработка)
 - [API Документация](#api-документация)
 - [Структура проекта](#структура-проекта)
-- [Лицензия](#лицензия)
 
 ## ✨ Особенности
 
@@ -363,7 +361,7 @@ server {
 ```
 ```bash
 # Активация конфигурации Nginx
-sudo ln -sf /etc/nginx/sites-available/cloud-storage /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/cloud_storage /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 
 # Проверка конфигурации
@@ -494,13 +492,11 @@ cd frontend && yarn run lint
 ## 📚 API Документация
 * После успешной установки API доступно по адресам:
 
-* Основное API: https://194.67.124.178:8443/api/
-* Swagger UI: https://194.67.124.178:8443/swagger/
-* ReDoc: https://194.67.124.178:8443/redoc/
+* **Основное API:** https://194.67.124.178:8443/api/
 
 ### Основные endpoints:
 *   POST /api/auth/login/ - Вход в систему
-*   POST /api/auth/register/ - Регистрация нового пользования
+*   POST /api/auth/register/ - Регистрация нового пользователя
 *   POST /api/auth/logout/ - Выход из системы
 *   GET /api/auth/user/ - Информация о текущем пользователе
 ### Управление файлами
@@ -632,9 +628,6 @@ free -h
 df -h
 top -bn1 | head -20
 ```
-
-## 📄 Лицензия
-Этот проект распространяется под лицензией MIT. Подробнее см. в файле [LICENSE](LICENSE).
 
 ## 👨‍💻 Автор
 Михаил
