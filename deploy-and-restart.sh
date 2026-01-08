@@ -45,17 +45,10 @@ echo "   Restarting Gunicorn..."
 cd ../backend
 ./run_gunicorn.sh restart
 
-# Nginx - используем полный путь /usr/bin/systemctl
-echo "   Reloading Nginx..."
-if sudo -n /usr/bin/systemctl reload nginx 2>/dev/null; then
-    echo "   ✅ Nginx reloaded successfully"
-else
-    echo "   ⚠️  Nginx reload failed or skipped"
-    # Пробуем альтернативный путь
-    if sudo -n /bin/systemctl reload nginx 2>/dev/null; then
-        echo "   ✅ Nginx reloaded (using /bin/systemctl)"
-    fi
-fi
+# Nginx - пропускаем перезагрузку для GitHub Actions
+echo "   Nginx reload: skipped (for GitHub Actions)"
+echo "   Note: Nginx automatically serves updated static files"
+echo "   To manually reload: sudo systemctl reload nginx"
 
 # 5. Проверка
 echo -e "\n5. Verification..."
