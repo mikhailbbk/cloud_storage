@@ -5,18 +5,24 @@ on:
     branches: [ server-version ]
   workflow_dispatch:
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v4
+
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: 194.58.95.13
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Просто запускаем наш скрипт
+            echo "=== Проверка подключения ==="
+            whoami
+            pwd
+            echo "=== Запуск деплоя ==="
             /opt/cloud_storage/deploy-and-restart.sh
