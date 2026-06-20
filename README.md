@@ -693,5 +693,5 @@ top -bn1 | head -20
 
 **GitHub:** @mikhailbbk  
 **Telegram**: @mikhailbbk  
-**Email**: nebushko.mikhail@gmail.com  
+**Email**: mikhailbbk.dev@gmail.com  
 **Сайт**: https://cloud.mikhailbbk.dev
