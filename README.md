@@ -4,12 +4,14 @@
 [![React](https://img.shields.io/badge/React-19.1.0-blue.svg)](https://reactjs.org/)
 [![Python](https://img.shields.io/badge/Python-3.12+-yellow.svg)](https://www.python.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12+-blue.svg)](https://www.postgresql.org/)
-
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Deployment](https://img.shields.io/badge/Deployment-Active-brightgreen.svg)](https://cloud.mikhailbbk.dev)
 Полнофункциональное облачное хранилище файлов с веб-интерфейсом, построенное на стеке Django REST Framework + React. Поддерживает загрузку, хранение, категоризацию и безопасный доступ к файлам.
 
-🌐 **Демо**: https://194.67.124.178:8443
+**Демо**: https://cloud.mikhailbbk.dev  
+**GitHub Repository**: https://github.com/mikhailbbk/cloud_storage
 
-## 📋 Содержание
+## Содержание
 - [Особенности](#особенности)
 - [Архитектура](#архитектура)
 - [Быстрый старт](#быстрый-старт)
@@ -18,25 +20,38 @@
 - [API Документация](#api-документация)
 - [Структура проекта](#структура-проекта)
 
-## ✨ Особенности
+## Обзор проекта
+**Cloud Storage** — это полнофункциональная облачная платформа для хранения и управления файлами, разработанная с использованием современных веб-технологий. Проект реализует концепцию персонального "Google Drive" или "Яндекс.Диска", предоставляя пользователям интуитивно понятный интерфейс для загрузки, организации, поиска и безопасного доступа к файлам через веб-браузер.
+
+**Основная цель**: Создать масштабируемое, безопасное и отзывчивое веб-приложение, демонстрирующее полный цикл разработки full-stack приложения — от проектирования бэкенда на Django REST Framework до создания динамического фронтенда на React и развертывания на production-сервере (VPS).
+
+**Статус проекта**: Production-ready | Автоматизированный деплой | SSL/TLS защита
+
+## Ключевые особенности
 
 ### Backend (Django REST Framework)
-- 🔐 **Аутентификация**: JWT токены, сессии, OAuth2
-- 📁 **Управление файлами**: Загрузка, скачивание, поиск, категории
-- 👥 **Права доступа**: Ролевая модель (админ, пользователь, гость)
-- 🗄️ **База данных**: PostgreSQL с оптимизацией для файловых метаданных
-- 📊 **API**: Полный REST API с Swagger документацией
-- ⚡ **Производительность**: Кэширование, пагинация, оптимизация запросов
+- **Аутентификация**: JWT токены, сессии, OAuth2
+- **Управление файлами**: Загрузка, скачивание, поиск, категории
+- **Права доступа**: Ролевая модель (админ, пользователь, гость)
+- **База данных**: PostgreSQL с оптимизацией для файловых метаданных
+- **API**: Полный REST API с Swagger документацией
+- **Производительность**: Кэширование, пагинация, оптимизация запросов
 
 ### Frontend (React)
-- 🎨 **Интерфейс**: Современный дизайн с Material-UI
-- 📱 **Адаптивность**: Полная поддержка мобильных устройств
-- 🔄 **Real-time**: WebSocket для уведомлений о загрузке
-- 📂 **Drag & Drop**: Интуитивная загрузка файлов
-- 🔍 **Поиск**: Быстрый поиск по файлам и метаданным
-- 🌐 **PWA**: Установка как нативное приложение
+- **Интерфейс**: Современный дизайн с Material-UI
+- **Адаптивность**: Полная поддержка мобильных устройств
+- **Real-time**: WebSocket для уведомлений о загрузке
+- **Drag & Drop**: Интуитивная загрузка файлов
+- **Поиск**: Быстрый поиск по файлам и метаданным
+- **PWA**: Установка как нативное приложение
 
-## 🏗️ Архитектура
+### DevOps & Infrastructure
+- **Nginx + Gunicorn** — Оптимальная конфигурация для отдачи статики и обработки запросов.
+- **Systemd Service Management** — Надежный запуск и мониторинг бэкенд-процессов.
+- **SSL/TLS Encryption** — Защищенное соединение для всех данных.
+- **Automated Backup Scripts** — Скрипты для резервного копирования базы данных и медиафайлов.
+
+## Архитектура
 ```
 ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
 │ React SPA │────▶│ Nginx (8443) │────▶│ Gunicorn │
@@ -53,7 +68,65 @@
 └─────────────────┘ └─────────────────┘
 ```
 
-## 🚀 Быстрый старт
+## Технологический стек
+### Frontend Layer:
+- **React 19** — Библиотека для построения пользовательских интерфейсов.
+- **Material-UI (MUI)** — Компонентная библиотека для современного дизайна.
+- **Axios** — HTTP-клиент для взаимодействия с API.
+- **React Router** — Навигация между страницами приложения.
+- **Context API / Hooks** — Управление состоянием приложения.
+### Backend Layer:
+- **Django 5 & Django REST Framework** — Фреймворк для быстрой разработки безопасного бэкенда и API.
+- **PostgreSQL** — Промышленная реляционная СУБД для хранения данных.
+- **Simple JWT** — Реализация JSON Web Tokens для аутентификации.
+- **Gunicorn** — WSGI-сервер для запуска Django в production.
+- **Python 3.12** — Основной язык программирования бэкенда.
+### Infrastructure & DevOps:
+- **Ubuntu / Nginx** — Операционная система и веб-сервер (обратный прокси).
+- **Git / GitHub** — Контроль версий и хостинг кода.
+- **Systemd** — Система инициализации и менеджер сервисов.
+- **Bash Scripting** — Автоматизация развертывания и обслуживания.
+
+## Функциональные модули
+### 1. Модуль аутентификации и пользователей
+- **Регистрация, вход, выход** — Полный цикл работы с учетными записями
+- **Восстановление пароля** — Готовый механизм восстановления доступа
+- **Профиль пользователя** — Квоты на дисковое пространство, статистика использования
+### 2. Модуль управления файлами (ядро системы)
+- **Многопоточная загрузка** — Загрузка файлов с прогресс-баром и паузой/возобновлением
+- **Виртуальные папки и категории** — Гибкая организация файлов
+- **Предпросмотр** — Изображения, текстовые файлы, PDF документы
+- **Скачивание** — Одиночные файлы и архивы для множественного скачивания
+- **Поиск и фильтрация** — По имени, типу, дате изменения, размеру
+### 3. Модуль администрирования (Django Admin)
+- **Полный контроль** — Управление пользователями, файлами, сессиями
+- **Статистика** — Мониторинг использования системы, активность пользователей
+- **Модерация контента** — Контроль загружаемого контента
+### 4. Модуль безопасности
+- **Валидация файлов** — Проверка типа, размера, MIME-типа
+- **Защита от угроз** — XSS, CSRF, SQL-инъекции (стандартные механизмы Django)
+- **Хэширование паролей** — Безопасное хранение учетных данных
+
+### Структура проекта
+```text
+cloud_storage/
+├── backend/                 # Django приложение
+│   ├── accounts/           # Аутентификация и пользователи
+│   ├── cloud_storage/      # Настройки проекта
+│   ├── core/              # Основное приложение
+│   ├── venv/              # Виртуальное окружение
+│   ├── manage.py
+│   └── requirements.txt
+├── frontend/               # React приложение
+│   ├── src/               # Исходный код
+│   ├── public/            # Статические файлы
+│   ├── package.json
+│   └── yarn.lock
+├── deploy-and-restart.sh   # Скрипт автоматического деплоя
+└── README.md
+```
+
+## Быстрый старт
 
 ### Предварительные требования
 - Python 3.8+
@@ -87,7 +160,7 @@ yarn install
 yarn start
 ```
 
-## 📦 Развертывание на VPS
+## Развертывание на VPS
 
 ### Системные требования
 *   **ОС**: Ubuntu 20.04 LTS или выше
@@ -222,9 +295,9 @@ yarn install
 
 # Создание production конфигурации
 cat > .env.production << EOF
-REACT_APP_API_URL=https://194.67.124.178:8443/api
-REACT_APP_BASE_URL=https://194.67.124.178:8443
-REACT_APP_WS_URL=wss://194.67.124.178:8443
+REACT_APP_API_URL=https://cloud.mikhailbbk.dev/api
+REACT_APP_BASE_URL=https://cloud.mikhailbbk.dev
+REACT_APP_WS_URL=wss://cloud.mikhailbbk.dev
 EOF
 
 # Сборка проекта
@@ -256,11 +329,11 @@ User=cloudapp
 Group=www-data
 WorkingDirectory=/opt/cloud_storage/backend
 Environment="PATH=/opt/cloud_storage/backend/venv/bin"
-Environment="DJANGO_SETTINGS_MODULE=cloud_storage.settings"
+Environment="DJANGO_SETTINGS_MODULE=core.settings"
 ExecStart=/opt/cloud_storage/backend/venv/bin/gunicorn \
     --workers 3 \
     --bind unix:/opt/cloud_storage/backend/cloud_storage.sock \
-    cloud_storage.wsgi:application
+    core.wsgi:application
 Restart=on-failure
 RestartSec=10
 
@@ -281,7 +354,7 @@ sudo nano /etc/nginx/sites-available/cloud_storage
 ```nginx
 server {
     listen 8443 ssl http2;
-    server_name 194.67.124.178;
+    server_name cloud.mikhailbbk.dev;
     
     # SSL конфигурация
     ssl_certificate /etc/ssl/certs/cloud_storage.crt;
@@ -456,25 +529,8 @@ chmod +x /opt/cloud_storage/check-installation.sh
 /opt/cloud_storage/check-installation.sh
 ```
 
-## 💻 Разработка
-### Структура проекта
-```text
-cloud_storage/
-├── backend/                 # Django приложение
-│   ├── accounts/           # Аутентификация и пользователи
-│   ├── cloud_storage/      # Настройки проекта
-│   ├── core/              # Основное приложение
-│   ├── venv/              # Виртуальное окружение
-│   ├── manage.py
-│   └── requirements.txt
-├── frontend/               # React приложение
-│   ├── src/               # Исходный код
-│   ├── public/            # Статические файлы
-│   ├── package.json
-│   └── yarn.lock
-├── deploy-and-restart.sh   # Скрипт автоматического деплоя
-└── README.md
-```
+## Разработка
+
 ### Скрипты разработки
 ```bash
 # Запуск в режиме разработки
@@ -489,28 +545,31 @@ cd frontend && yarn test
 cd backend && flake8 .
 cd frontend && yarn run lint
 ```
-## 📚 API Документация
+## API Документация
 * После успешной установки API доступно по адресам:
 
-* **Основное API:** https://194.67.124.178:8443/api/
+- **Основное API**: https://cloud.mikhailbbk.dev/api/
+- **Swagger UI**: https://cloud.mikhailbbk.dev/swagger/
+- **ReDoc**: https://cloud.mikhailbbk.dev/redoc/
+- **Админ-панель**: https://cloud.mikhailbbk.dev/admin/
 
 ### Основные endpoints:
-*   POST /api/auth/login/ - Вход в систему
-*   POST /api/auth/register/ - Регистрация нового пользователя
-*   POST /api/auth/logout/ - Выход из системы
-*   GET /api/auth/user/ - Информация о текущем пользователе
+- POST /api/auth/login/ - Вход в систему
+- POST /api/auth/register/ - Регистрация нового пользователя
+- POST /api/auth/logout/ - Выход из системы
+- GET /api/auth/user/ - Информация о текущем пользователе
 ### Управление файлами
-*   GET /api/files/ - Список файлов (с пагинацией)
-*   POST /api/files/upload/ - Загрузка файла
-*   GET /api/files/{id}/ - Детальная информация о файле
-*   GET /api/files/{id}/download/ - Скачивание файла
-*   DELETE /api/files/{id}/ - Удаление файла
-*   PUT /api/files/{id}/ - Обновление метаданных файла
+- GET /api/files/ - Список файлов (с пагинацией)
+- POST /api/files/upload/ - Загрузка файла
+- GET /api/files/{id}/ - Детальная информация о файле
+- GET /api/files/{id}/download/ - Скачивание файла
+- DELETE /api/files/{id}/ - Удаление файла
+- PUT /api/files/{id}/ - Обновление метаданных файла
 
 ### Категории
-*   GET /api/categories/ - Список категорий
-*   POST /api/categories/ - Создание категории
-*   GET /api/categories/{id}/files/ - Файлы в категории
+- GET /api/categories/ - Список категорий
+- POST /api/categories/ - Создание категории
+- GET /api/categories/{id}/files/ - Файлы в категории
 
 ## 🔧 Управление проектом
 ### Обновление production
@@ -561,7 +620,7 @@ find $BACKUP_DIR -name "*.tar.gz" -mtime +30 -delete
 echo "Резервное копирование завершено: $BACKUP_DIR"
 ```
 
-## 🐛 Устранение неполадок
+## Устранение неполадок
 ### Распространенные проблемы
 #### 1. Ошибка 502 Bad Gateway
 
@@ -629,7 +688,10 @@ df -h
 top -bn1 | head -20
 ```
 
-## 👨‍💻 Автор
+## Автор
 Михаил
 
-**GitHub:** @mikhailbbk
+**GitHub:** @mikhailbbk  
+**Telegram**: @mikhailbbk  
+**Email**: nebushko.mikhail@gmail.com  
+**Сайт**: https://cloud.mikhailbbk.dev
