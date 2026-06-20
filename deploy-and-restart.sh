@@ -13,9 +13,9 @@ git checkout server-version
 git reset --hard origin/server-version
 
 # 2. Настройка бэкенда
-echo -e "\n2. Setting up backend..."
+echo ""
+echo "2. Setting up backend..."
 cd backend
-
 source venv/bin/activate
 
 echo "   Installing dependencies..."
@@ -27,42 +27,41 @@ python manage.py migrate --noinput
 
 echo "   Collecting static files..."
 python manage.py collectstatic --noinput --clear
-
 deactivate
 
 # 3. Настройка фронтенда
-echo -e "\n3. Setting up frontend..."
+echo ""
+echo "3. Setting up frontend..."
 cd ../frontend
+echo "   Installing dependencies..."
+yarn install
 
 echo "   Building frontend..."
-npm run build
+yarn run build
 
 # 4. Перезапуск сервисов
-echo -e "\n4. Restarting services..."
-
-# Gunicorn
+echo ""
+echo "4. Restarting services..."
 echo "   Restarting Gunicorn..."
-cd ../backend
-./run_gunicorn.sh restart
+systemctl restart cloud_storage
 
-# Nginx - пропускаем перезагрузку для GitHub Actions
-echo "   Nginx reload: skipped (for GitHub Actions)"
-echo "   Note: Nginx automatically serves updated static files"
-echo "   To manually reload: sudo systemctl reload nginx"
+echo "   Reloading Nginx..."
+systemctl reload nginx
 
 # 5. Проверка
-echo -e "\n5. Verification..."
-sleep 2
+echo ""
+echo "5. Verification..."
+sleep 3
 
-echo -n "   Django API: "
-if curl -s -f http://127.0.0.1:8001/api/ > /dev/null 2>&1; then
+echo -n "   Django API (socket): "
+if curl -s --unix-socket /opt/cloud_storage/backend/cloud_storage.sock http://localhost/api/ > /dev/null 2>&1; then
     echo "✅ running"
 else
     echo "❌ not responding"
 fi
 
-echo -n "   Frontend: "
-if curl -s -f -k https://194.67.124.178:8443/ > /dev/null 2>&1; then
+echo -n "   Frontend (https): "
+if curl -s -f -k https://cloud.mikhailbbk.dev/ > /dev/null 2>&1; then
     echo "✅ served"
 else
     echo "❌ not served"
@@ -71,5 +70,5 @@ fi
 echo ""
 echo "========================================"
 echo "✅ DEPLOYMENT COMPLETED SUCCESSFULLY!"
-echo "Application available at: https://194.67.124.178:8443"
+echo "Application available at: https://cloud.mikhailbbk.dev"
 echo "========================================"
