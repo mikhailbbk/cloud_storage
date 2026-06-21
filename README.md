@@ -507,17 +507,17 @@ sudo netstat -tlnp | grep :8443 && echo "   ✅ Слушается" || echo "   
 echo
 echo "3. Проверка доступности:"
 echo "   - Веб-интерфейс:"
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://194.67.124.178:8443/)
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://cloud.mikhailbbk.dev)
 [ "$HTTP_CODE" = "200" ] && echo "   ✅ Доступен (код: $HTTP_CODE)" || echo "   ❌ Недоступен (код: $HTTP_CODE)"
 
 echo
 echo "4. Проверка API:"
-API_CHECK=$(curl -s https://194.67.124.178:8443/api/ | head -c 20)
+API_CHECK=$(curl -s https://cloud.mikhailbbk.dev/api/ | head -c 20)
 [ -n "$API_CHECK" ] && echo "   ✅ API отвечает" || echo "   ❌ API не отвечает"
 
 echo
 echo "5. Проверка статических файлов:"
-STATIC_CHECK=$(curl -s -I https://194.67.124.178:8443/static/ 2>/dev/null | head -n 1)
+STATIC_CHECK=$(curl -s -I https://cloud.mikhailbbk.dev/static/ 2>/dev/null | head -n 1)
 [[ "$STATIC_CHECK" == *"200"* || "$STATIC_CHECK" == *"404"* ]] && \
 echo "   ✅ Статика настроена" || echo "   ❌ Проблема со статикой"
 
